@@ -1,1 +1,298 @@
+import os
+import subprocess
+import shutil
+from time import localtime
+
+MY_USER_DIR = "c:\\Users\\XYZ"  # Your windows user directory
+ACTIVE_FLAG = os.path.join(MY_USER_DIR, ".migration.active")
+COMPONENTS_UUID_FILE = os.path.join(MY_USER_DIR, ".migration.components_uuid")
+SCM_EXE = '"C:\\Program Files\\jazz\\scmtools\\eclipse\\fec.exe"'  # Path to your scm executable.
+JAZZ_REPOS = "https://jazz.xxyyzz.net/ccm/"  # URL to your JAZZ repositories.
+JAZZ_USER = "UserName"  # Your JAZZ username.
+JAZZ_PW = '"Password"'  # Your JAZZ password.
+JAZZ_STREAM = '"Development_Stream"'  # Name of the stream to convert.
+JAZZ_WORKSPACE = 'Jazz2Git_MigrationWorkspace'  # Name of a temporary workspace
+# created automagically by this script.
+JAZZ_MAXNUM_CHANGESETS = 15000  # Choose these numbers wisely.
+JAZZ_MAXNUM_BASELINES = 10000  # too big -> oom exception
+LOCAL_FILESTORE = "C:\\1"  # Here are your local files
+GIT_MASTER_DIRECTORY = "C:\\2"  # Your git repos are created here.
+SIMULATION = 0  # Set to 1 to test accept all changes.
+DEFAULT_EMAIL = '<developer@company.com>'  # Dummy Address for all authors.
+
+
+def translateUtf16(string):
+    string = string.replace("\\u00f6", "ï¿½")
+    string = string.replace("\\u00e4", "ï¿½")
+    string = string.replace("\\u00fc", "ï¿½")
+    string = string.replace("\\u00c4", "ï¿½")
+    string = string.replace("\\u00d6", "ï¿½")
+    string = string.replace("\\u00dc", "ï¿½")
+    return string
+
+
+def setInProgressFlag():
+    with open(ACTIVE_FLAG, "w") as fhflag:
+        fhflag.write("Active")
+
+
+def resetInProgressFlag():
+    os.remove(ACTIVE_FLAG)
+
+
+def checkInProgressFlag():
+    return os.path.isfile(ACTIVE_FLAG)
+
+
+def loginJazz():
+    subprocess.call([SCM_EXE, "login", "-r", JAZZ_REPOS, "-u", JAZZ_USER, "-P", JAZZ_PW])
+
+
+def logoutJazz():
+    subprocess.call([SCM_EXE, "logout", "-r", JAZZ_REPOS])
+
+
+def translateMonth(month):
+    if month == "Jan":
+        return 1
+    elif month == "Feb":
+        return 2
+    elif month == "Mï¿½r":
+        return 3
+    elif month == "Apr":
+        return 4
+    elif month == "Mai":
+        return 5
+    elif month == "Jun":
+        return 6
+    elif month == "Jul":
+        return 7
+    elif month == "Aug":
+        return 8
+    elif month == "Sep":
+        return 9
+    elif month == "Okt":
+        return 10
+    elif month == "Nov":
+        return 11
+    elif month == "Dez":
+        return 12
+    else:
+        raise ValueError("Error converting month")
+
+
+def amPmTo24h(hour, ampm):
+    value = int(hour)
+    if hour == "12":
+        value = 0
+        if ampm == "PM":
+            value = 12
+    else:
+        if ampm == "PM":
+            value += 12
+    return value
+
+
+def main():
+    # Login to Jazz
+    print("Login to JAZZ")
+    loginJazz()
+
+    components = []
+    if not checkInProgressFlag():
+        # Delete old Workspace
+        print("Delete workspace in JAZZ")
+        subprocess.call([SCM_EXE, "delete", "workspace", JAZZ_WORKSPACE, "-r", JAZZ_REPOS])
+        # Create new Workspace
+        print("Create new workspace in JAZZ")
+        subprocess.call([SCM_EXE, "create", "workspace", JAZZ_WORKSPACE, "-r", JAZZ_REPOS, "-s", JAZZ_STREAM])
+        # Get UUID of Stream
+        print("Get UUID for stream")
+        output = subprocess.check_output([SCM_EXE, "--show-alias", "n", "--show-uuid", "y", "show", "attributes",
+                                          "-r", JAZZ_REPOS, "-w", JAZZ_STREAM])
+        streamUUID = output.decode().split("(")[1].split(")")[0]
+        print("UUID of stream", JAZZ_STREAM, "is", streamUUID)
+        # Get Components in stream
+        print("Get components in stream")
+        output = subprocess.check_output([SCM_EXE, "--show-alias", "n", "--show-uuid", "y", "list", "components", "-v",
+                                          "-r", JAZZ_REPOS, streamUUID])
+        for line in output.decode().split("\n"):
+            if "Komponente: (" in line:
+                component_uuid = line.split("(")[1].split(")")[0]
+                component_name = line.split('"')[1]
+                print("Component", component_name, "UUID", component_uuid)
+                components.append({"name": component_name, "uuid": component_uuid, "changesets": []})
+        with open(COMPONENTS_UUID_FILE, "w") as fh2:
+            for c in components:
+                fh2.write(f"{c['name']}={c['uuid']}\n")
+
+        if os.path.isdir(GIT_MASTER_DIRECTORY):
+            print("Removing git master directory", GIT_MASTER_DIRECTORY)
+            shutil.rmtree(GIT_MASTER_DIRECTORY)
+        print("Creating git master directory", GIT_MASTER_DIRECTORY)
+        os.mkdir(GIT_MASTER_DIRECTORY)
+        setInProgressFlag()
+    else:
+        with open(COMPONENTS_UUID_FILE, "r") as fh:
+            for line in fh:
+                if "=" in line:
+                    component_name, component_uuid = line.strip().split("=")
+                    components.append({"name": component_name, "uuid": component_uuid, "changesets": []})
+                    print("Read component from file. Name:", component_name, "UUID:", component_uuid)
+
+    for component in components:
+        if component["name"] == "xxyxyyyzzz":
+            continue  # If you want to skip some components of the stream...
+        os.chdir("c:\\")
+        if os.path.isdir(LOCAL_FILESTORE):
+            print("Removing working directory", LOCAL_FILESTORE)
+            shutil.rmtree(LOCAL_FILESTORE)
+        print("Creating working directory", LOCAL_FILESTORE)
+        os.mkdir(LOCAL_FILESTORE)
+        print("Changing active directory to", LOCAL_FILESTORE)
+        os.chdir(LOCAL_FILESTORE)
+        gitRepos = os.path.join(GIT_MASTER_DIRECTORY, component["name"], ".git")
+        changesetFilename = MY_USER_DIR + "\\.migration_changeset_" + component["uuid"]
+        changeset_uuids = []
+        if os.path.exists(changesetFilename):
+            with open(changesetFilename, "r") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if len(line) > 10:
+                        changeset_uuids.append(line)
+        else:
+            print("Loading changeset overview for component", component["name"])
+            cmd = [SCM_EXE, "list", "changesets", "-r", JAZZ_REPOS, "-w", JAZZ_WORKSPACE, "-C", component["uuid"],
+                   "-m", str(JAZZ_MAXNUM_CHANGESETS), "-j"]
+            output = subprocess.check_output(cmd)
+            for line in output.decode().split("\n"):
+                if '"uuid": "' in line:
+                    changeset_uuids.insert(0, line.split('"')[3])
+            if len(changeset_uuids) == 0:
+                raise ValueError("Unable to read changesets from server")
+            with open(changesetFilename, "w") as fh:
+                for xy in changeset_uuids:
+                    fh.write(xy + "\n")
+
+        lastChangesetFilename = MY_USER_DIR + "\\.migration_last_changeset_" + component["uuid"]
+        lastChangeset = ""
+        if os.path.exists(lastChangesetFilename):
+            with open(lastChangesetFilename, "r") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if len(line) > 10:
+                        lastChangeset = line
+        else:
+            print("Loading baselines of component.")
+            baseline_uuid = ""
+            smallestID = 1000000
+            currentID = -1
+            cmd = [SCM_EXE, "list", "baselines", "-r", JAZZ_REPOS, "-j", "-m", str(JAZZ_MAXNUM_BASELINES),
+                   "--components", component["uuid"]]
+            output = subprocess.check_output(cmd)
+            for line in output.decode().split("\n"):
+                if '"id": ' in line:
+                    currentID = int(line.split(":")[1].strip())
+                    if currentID > smallestID:
+                        smallestID = -1
+                    else:
+                        smallestID = currentID
+                if currentID >= 0 and '"uuid": "' in line:
+                    currentID = -1
+                    baseline_uuid = line.split('"')[3]
+            print("Setting component to earliest baseline", baseline_uuid)
+            cmd = [SCM_EXE, "set", "component", "-r", JAZZ_REPOS, "-b", baseline_uuid, JAZZ_WORKSPACE, "workspace",
+                   JAZZ_WORKSPACE, component["uuid"]]
+            subprocess.call(cmd)
+            print("Creating git repository", os.path.join(GIT_MASTER_DIRECTORY, component["name"]))
+            subprocess.call(["git", "init", os.path.join(GIT_MASTER_DIRECTORY, component["name"])])
+            print("Loading component into working directory", LOCAL_FILESTORE)
+            cmd = [SCM_EXE, "load", "-r", JAZZ_REPOS, "--force", JAZZ_WORKSPACE, component["uuid"]]
+            subprocess.call(cmd)
+            with open(".gitignore", "w") as fh:
+                fh.write(".jazz5/\r\n")  # Adjust this to your version of Jazz, except you want to migrate these files as well.
+
+        print("Reading changesets of component", component["name"])
+        counter = 0
+        firstAccept = True
+        for uuid in changeset_uuids:
+            if lastChangeset != "":
+                if lastChangeset != uuid:
+                    lastChangeset = ""
+                    continue
+            # Ommitting "bad" changesets (e.g. bad file or directory names, unresolved conflicts, ...)
+            if uuid in ["_cf9bQUS0EeS4fd38lnw30Q", "_rrkCwUS0EeS4fd38lnw30Q"]:
+                print("Omitting changeset", uuid)
+                continue
+            changeSet = {}
+            if not SIMULATION:
+                print("Reading details of changeset", uuid)
+                cmd = [SCM_EXE, "list", "changes", "-r", JAZZ_REPOS, "-w", JAZZ_WORKSPACE, "-j", uuid]
+                output = subprocess.check_output(cmd)
+                lastPart = False
+                for line in output.decode().split("\n"):
+                    if '"author": "' in line:
+                        changeSet["author"] = translateUtf16(line.split('"')[3])
+                    if '"comment": "' in line:
+                        changeSet["comment"] = translateUtf16(line.split('"')[3])
+                    if '"modified": "' in line:
+                        changeSet["date_modified"] = translateUtf16(line.split('"')[3])
+                        lastPart = True
+                    if lastPart and '"uuid": "' in line:
+                        changeSet["uuid"] = line.split('"')[3]
+                        component["changesets"].insert(0, changeSet.copy())
+                        lastPart = False
+            print("Accepting changeset", changeSet["comment"]) if not SIMULATION else None
+            cmd = [SCM_EXE, "accept", "-r", JAZZ_REPOS, "-t", JAZZ_WORKSPACE, "--overwrite-uncommitted",
+                   "--accept-missing-changesets", "-N", "-c", uuid]
+            if subprocess.call(cmd):
+                # Get the error message:
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output, _ = p.communicate()
+                if b"CRRTC5094E" in output or b"ist bereits im Verlaufsprotokoll enthalten" in output:
+                    continue
+                print("Error accepting a changeset while executing the following command:")
+                print(" ".join(cmd))
+                # Give it a second try...
+                if subprocess.call(cmd):
+                    # Didn't work, so...
+                    print("Unable to call this command successfully:")
+                    print(" ".join(cmd))
+                    print("Please repair by hand, then terminate the shell with 'exit'")
+                    # This command starts a user shell and waits for "exit".
+                    subprocess.call(["cmd"])
+            if not SIMULATION:
+                cmd = [SCM_EXE, "load", "-r", JAZZ_REPOS, "--force", JAZZ_WORKSPACE, component["uuid"]]
+                subprocess.call(cmd)
+                cmd = ["git", "--git-dir=" + gitRepos, "add", "-A"]
+                subprocess.call(cmd)
+                with open("c:/message.txt", "w") as fh:
+                    fh.write(changeSet["comment"])
+                jazzDate = changeSet["date_modified"]
+                jazzDate = jazzDate.split(" ")[0]
+                jazzDate = jazzDate.split("-")
+                gitDate = "{:02d}.{:02d}.{:04d}".format(int(jazzDate[2]), translateMonth(jazzDate[1]), int(jazzDate[0]))
+                gitDate += " " + changeSet["date_modified"].split(" ")[1]
+                print("Jazz date:", changeSet["date_modified"], "Git date:", gitDate)
+                print("Committing into Git with author", changeSet["author"], "and date", changeSet["date_modified"])
+                cmd = ["git", "--git-dir=" + gitRepos, "commit", "-F", "c:\\message.txt",
+                       "--author", changeSet["author"] + " " + DEFAULT_EMAIL, "--date", gitDate]
+                subprocess.call(cmd)
+                os.remove("c:\\message.txt")
+            print(str(localtime))
+            firstAccept = False
+            with open(lastChangesetFilename, "w") as fh1:
+                fh1.write(uuid + "\n")
+    # Delete Workspace
+    print("Delete workspace in JAZZ")
+    subprocess.call([SCM_EXE, "delete", "workspace", JAZZ_WORKSPACE, "-r", JAZZ_REPOS])
+    print("Logging out")
+    logoutJazz()
+    resetInProgressFlag()
+
+
+if __name__ == "__main__":
+    main()
+
+
 
