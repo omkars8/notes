@@ -1,0 +1,500 @@
+DevOps By AshokIT
+
+***********DevOps*******************
+
+-DevOps is a culture or process.
+-By using DevOps culture, we can automate application build and deployment process.
+-By using DevOps culture, we can establish collaboration between development and operations team.
+-the main objective is quicker delivery of application to client.
+
+Responsibilities of development team - create project, add dependencies, create programs, build logic, test program, code review, code integration.
+
+Responsibilities of operations team - set up infrastructure, install required software, set up all servers, set up database servers, take code from GitHub, compile the code, package the code, deploy onto server, deliver the project.
+
+Tasks done by operation team can be automated to achieve faster delivery of application. Devops Engineer will automate the process.
+
+
+
+Note:
+Build:- Compiling project source code to check syntaxes and packaging code into executable file that is jar or war file(artifact)
+Deploy:- The process of keeping packaged file on application server for execution.
+
+
+Note:
+-JVM will execute bytecode(.class files). 
+-Jar file is zip archive containing one or more .class files. We will deploy jar file on tomcat server
+
+
+-As soon as development team pushes the code on remote git repository, created on git repository hosting services like GitHub; Jenkins will pull the code.
+-Maven, SonarQube and Nexus Repository Manager which are configured with Jenkins will package the code, does code review,  store the artifact into artifact repository respectively.
+-Jenkins will then deploy the application on the application server such as tomcat.
+
+
+
+
+************** 1. Apache Maven ***********************
+
+-maven is a build tool which is free and open source given by Apache organization.
+-maven is used for only Java projects. It is used for Java applications build process.
+-with Maven we can create project folder structure, we can download dependencies for project like spring, hibernate dependencies.
+-we can compile project source code, we can execute unit test code, we can package our application as jar or war file.
+
+Maven environment setup:-
+1. Download and install Java software as maven is developed with Java so it needs jvm to run.
+2. Set JAVA_HOME and set PATH for Java.
+
+JAVA_HOME=…\jdk
+PATH=…\jdk\bin
+
+3. Download maven.
+4. Set MAVEN_HOME and set PATH for maven.
+
+MAVEN_HOME=….\apache-maven-3.0
+PATH=….\apache-maven-3.0\bin
+
+Other applications which use Java may require JAVA_HOME to locate java in the system. JAVA_HOME isn't used by java itself, some 3rd party programmes use that.
+
+
+## Maven Project  folder structure  ##
+
+maven dependencies:-it contains jobs downloaded by maven.
+Target:-it contains .class files and packaged files.
+Pom.xml:-maven configuration file. Configure dependencies required for project.
+
+Maven goals:-
+-Maven provided goals to perform build process
+1) Clean 2) compile 3) test 4) package 5) install
+
+-every maven goal is associated with maven plugin.
+-when we execute goal then plugins will execute to perform operation.
+
+-syntax to execute maven goal:-
+                          $ mvn <goal-name>
+
+-mvn compile = Compile the project and we will create .class file in target folder
+-mvn clean = delete target folder
+-mvn clean compile = delete target folder and compile project once again
+-mvn packae = will package application as jar or war file and keep that in target folder
+-mvn test = execute Junit classes
+-mvn install = to install our application as dependency 
+
+-package goal will internally execute compile goal, test goal, and package application.
+-goals should be executed from project folder. 
+
+
+## Maven Repositories ##
+
+1) Central  2) remote  3) local
+
+- Central repository will be maintained by Apache organization.
+-every software company will maintain their own remote repository.
+-when we install may one local repository will be created in our machine at C:\users\omkar\.m2\repository.
+-our local repository with be connected to central repository or remote repository.
+
+
+
+************** 2. Github ***********************
+
+-It is a repository server.
+-project source code will be stored in GitHub.
+-developer with store code in GitHub.
+-github provides monitored access on code base/
+-GitHub uses get as version control software
+
+GitHub setup:-
+Install git client software and create GitHub account
+
+-To introduce ourselves to git software
+       git config--global user.name ‘’---’’
+       git config-- global user.email ‘’----’’
+
+
+
+
+## Git concepts ## 
+
+-git init :- To initialize our folder as git working directory
+-git clone :- To clone git repository to our machine.
+- git status :- It will display staged, unstaged, and untracked files.
+         
+	staged=The files which are added for commit 
+	unstaged=The files which are modified but not added for commit
+	untracked= newly created files
+
+-git add :- It is used to add files to staging area.
+-git commit :- It is used to commit staged files to git local repository.
+-git push :- To push changes from git local repository to git central repository.              
+ 
+
+Untracked/modified----------------------> Staged------------------------->Local repo.(.git folder)-------------->remote repo. Hosted on github/bitbucket
+                                         git add                                  git commit                                                     git push
+
+
+
+Note: If you are doing git push for first time, it will ask to enter github credentials.
+Note: GitHub password will be stored in Credentials Manager->Windows credentials->Github.
+
+
+
+
+** After committing changes to local repository, we need to push those changes to remote repository
+Hosted on GitHub (Repository on github should be created manually before next steps), for that we will do 
+    1) git branch –M main :- rename current branch from master to main. (Optional Step)
+    2)git remote add origin <repo-url> :- creates a connection name as “origin”; you can use any name instead of origin.
+                                                                      Needs to be executed only once while creating connection.
+    3)git push –u origin main :- Push files from local repo. to remote repo with connection origin; on the main branch
+                                                     of remote repo; needs to executed for first time, afterwards can use only git push.
+
+
+Note:- After executing git remote command as above, we can see url in config file located at .git\config
+
+
+
+** We can restore changes done in file which is in staged area and file which is in modified area
+	i)files in modified stage : git restore <file-name> will undo changes done in file.
+                  ii) files in staged area :- git restore –staged <file-name> will unstage file and keep in its previous state which 
+	 		       can be modified or untracked
+    
+                    restore ===undo===going one step backwards 
+ 
+
+- git clone :- download entire project.
+- git pull :- get only updated changes from remote repo. to local repo. (refreshing for changes done at remote).
+
+Note:- When we clone a git repository with git clone, it automatically creates a remote connection called origin 
+            pointing back to cloned repository.
+
+
+
+
+** Usecase1 :-
+ Manager assigned task id:101. I am working on that task( I am in the middle of the task). Manager told me to stop
+current task 101 and complete task 102 on priority. Once 102 is completed then resume your work on 101.
+When manager asked me to start 102 task, I have already done few changes for 101(partially completed). We can’t
+Push partial changes to repository because with partial changes our existing functionality may break. We can’t delete 
+Our changes because we have spent few hours of time to implement those changes.
+
+=> git stash is used here to save working tree changes to temporary location and make working tree clean. After 
+  priority work completed we can get stashed changes back using git stash apply.
+
+-git stash :- will save changes to a temporary location. 
+- git stash apply :- get changes back from temporary location to working directory.
+
+Note:- We can’t use trick of keeping working files(task 101 files) as it is and move files of 102 to staging area and 
+            then push; because it may happen that task 102 may require working on files which are common to both of 
+            them. (i.e task 101 and 102 have changes in the same file). Therefore we have to use stash command.
+
+** Usecase2 :-
+A and B working on a project, both are collaborators to github repo. A and B cloned repository in morning and 
+Started working. B finished work by afternoon and pushed code to github. A finished his work by evening, when 
+tried to do git push, A got an error.
+Error saying you don’t have same file locally as it is available now on remote repo i.e someone has pushed his code 
+And made changes on remote repo. You need to first pull that changes in your local repo and then push your changes
+to remote repo.
+
+=> So when A does git pull; as git pull is (git fetch + git merge). A got error this time also, because while merging changes 
+Done by B with the code of A, there is a merge conflict i.e A and B both have updated same file, same line of code.
+
+Git will get confuse whose changes to persist finally and it will generate some junk code in file while merging.
+Now A and B need to do discussion with mutual coordination they have to decide whose changes should be 
+Done finally.
+
+So person doing last push i.e A, need to do as per discussions, make changes in code and then should do git pull. After
+Wards, A has to do git push.
+
+Note: git pull will get updated changes and merge with the commits you have done.
+
+
+## Git Branches ##
+
+-Branches are used to maintain separate code bases for our project. In got repository we can create multiple branches.
+- Development team will integrate code in develop branch
+-bug fixing team will integrate code in qa branch
+-To clone a particular branch, we can use git clone –b <branch-name> <repo-url>
+
+
+** Branch Merging 
+-The process of merging changes from one branch to another is called branch merging.
+-we will use pull request for branch merging.
+-Create a pull request specifying “to” branch and “from” branch.
+
+-git branch :- show current branch you are on.
+-git checkout <branch-name> :- will switch to desired branch.
+
+Note: git push if gives error then first do git pull. git clone will download all branches. 
+           git clone –b <branch> will take us on that branch.
+
+
+
+Q. What is .gitignore?
+=> The .gitignore is used to configure the files or folders which we want to ignore from our commits.
+-In other words, files and folders which we do not want to tracked by git we will specify them in .gitignore
+-we will create file with .gitignore name. we will write file names and folder names in gitignore which don’t 
+Want to be tracked. 
+
+
+Q. git merge  vs git rebase?
+=>These commands are used to merge changes from one branch to another branch.
+-git merge will maintain commit history. git rebase will not maintain that history.
+-When we are working on particular sprint and we want to merge changes from one branch to another 
+Branch we will use git merge command.
+-once sprint-1 is delivered then we want to take latest code of sprint-1 to start sprint2 development,
+In this case we don’t need commit history we will use git rebase command.
+
+
+
+
+
+
+
+
+************** 3. Tomcat Server ***********************
+
+
+-Application are of 2 types:
+Standalone apps      2) Web apps
+
+-Standalone apps we need to download and install e.g. notepad, calculator, MS-paint.
+-Web apps run over internet can be accessed through browser e.g. facebook, irctc, gmail.
+-Web apps run on the server. We need to deploy web apps on the server. Server is a program which will execute 
+ our web app. E.g. Tomcat, Websphere, IIS, glassfish.
+-IIS for .net web app deployment
+-To run our web app locally we need to download and install server and then we have to deploy our app into server 
+ for execution.
+-Once app is deployed onto server, multiple users can access our application at a time using app url.
+
+
+## Apache Tomcat Server ##
+
+-Apache Tomcat is a web server which is free and open-source.
+-We can run java web app using Tomcat.
+-We need to download Tomcat Server to run java web app.
+-Java web app will be deployed as a war file on the server.
+-Tomcat Server default port is 8080.
+
+
+** Tomcat Server Folder Structure:-
+
+bin:- commands to start and stop server. E.g. startup.sh/bat, shutdown.sh/bat
+conf:- configuration files contains server.xml (to modify port no.), tomcat-users.xml(users of tomcat).
+lib:- library files available here.
+logs:- server execution details are stored here.
+webapps:- it is called deployment folder. To deploy war file on server means to keep war file in web-apps folder.
+temp:- temporary files created here.
+
+-Apache Tomcat is developed using java so we need to install java s/w to run tomcat server on our machines.
+
+
+
+
+
+
+
+************** 4. Sonar Qube ***********************
+
+
+-Sonarqube is used to check code quality.
+-Sonarqube supports 20+ programming languages.
+-Sonarqube is used to review source code of our application.
+-It is available in 2 editions. CE-community edition and EE-Enterprise edition.
+-It supports multiple OS, browsers, DB’s.
+
+
+Q. Code Review vs Code Coverage ?
+=>
+-code review is used to check quality of code.
+-code coverage is used to identify how many lines of code is tested in unit testing. Industry bench mark 
+ for code coverage is 80%.
+
+
+-Sonarqube will identify issues in our code.
+-Issues can be potential bugs, vulnerabilities, code smells, duplicate code blocks, code coverage, coding standards.
+-For all the above issues sonarqube will generate a report.
+
+
+** Sonarqube setup
+
+-Sonarqube developed using java. Java s/w is required to run sonarqube.
+-Sonarqube requires min 2 GB of RAM. Sonar 7.6v requires Java 1.8 while Sonar 7.8v requires higher java version.
+-Sonarqube is s/w quality management tool can generate report in html/pdf format.
+
+Note: Doing code review means checking if coding standards are followed or not; checking coding conventions are 
+           followed or not.
+
+
+** SonarQube Architecture
+
+SonarQube Scanner :- It will take source code as input and it will generate report.
+SonarQube Server :- has 3 components. Compute Engine, Database, WebServer.
+
+-SonarQube Server runs on port 9000.
+-SonarQube Server will not run with root user (We have to create sonar user)
+
+-We need to integrate sonarqube with our maven application.
+-For that we need to configure properties under <properties> tag in pom.xml
+
+<properties>
+<sonar.host.url> ec2-ip</sonar.host.url>
+<sonar.login>admin </sonar.login>
+<sonar.password> admin</sonar.password>
+</properties>
+
+-Go to cmd and compile our maven project with mvn clean compile/mvn clean package.
+-Then execute goal to do sonarqube integration
+                                    $ mvn sonar:sonar
+-For Security reason instead of having login and password in pom.xml we can use token in pom.xml
+-Security->Generate token-> paste it in pom.xml
+
+
+
+** Quality Profile
+
+-For each language sonar qube provides one quality profile. (Sonarway is default profile for all). Whenever we do code review for java project, this sonarway profile for java will be referred.
+-Quality profile is a collection of rules to perform code review.
+-We can create our own quality profile based on project requirement.
+-Either we can make our custom quality profile as default one then it will be applicable for all projects which gets reviewed under 
+ this sonar server OR we can have custom quality profile to specific project by project name-> administration -> quality profile ->
+ choose custom.
+
+Note:- If we have common rule set for all projects then we can create one quality profile and use that as parent quality profile for 
+            other profiles.
+
+
+
+** Quality Gate
+
+-Represents set of metric to identify project quality is passed or failed.
+-For every project quality gate should be passed.
+-It is like passing criteria for project.
+-In Sonar, we have default quality gate, if required we can create our own quality gates also.
+-Exactly same as quality profile, quality gate can be made default or specific to one project.
+
+Note:- Development team will fix issues found in code review, we will send sonar server url to dev team.
+
+
+
+
+
+
+
+************** 5. Nexus Artifactory ***********************
+
+
+-Nexus is an artifact repository server.
+-Nexus s/w developed using java. We can store and retrieve build artifacts into nexus server.
+-Nexus Server can be integrated with maven s/w.
+
+Hardware requirement:- Min 1 GB RAM
+Software requirement:- Java 
+
+
+
+
+Q. What is difference between github and nexus?
+=>
+GitHub is repository server to store source code. Nexus is an artifactory server to store build artifacts like 
+jar, war, docker images.
+ 
+
+
+
+** Nexus Setup and Integrate nexus with maven
+
+-Nexus will run on port 8081 by default. We can change port in /opt/nexus/etc/nexus.properties
+-We have to create repositories in nexus to store build artifacts.
+-Repositories in nexus can be of 2 types
+        i) snapshot     ii) release.
+-If Project is under development then that project build artifacts will be store in snapshot repository.
+-If project development is completed and released to production then that project build artifacts will be stored 
+  to release repository.
+-Nexus repository details we will configure in project in pom.xml file like below
+ 
+   <distributionManagement>
+     <repository>
+<id> nexus </id>
+<name> demo </name>
+<url>………../demo-release-repo  </url>
+</repository>
+
+      <SnapshotRepository>
+             --||--
+       <url>………../demo-snapshot-repo  </url>
+        </SnapshotRepository>
+
+</distributionManagement>
+
+
+-Nexus server credentials will be configured in maven “settings.xml” file.
+-Maven location of settings.xml is ……./apache-maven-3.8/conf/settings.xml
+-In settings.xml under <servers> tag add below <server> tag
+
+<server>
+<id>nexus</id>
+<username>….</username>
+<password>……</password>
+</server>
+
+
+
+Q. How nexus will be decide  artifact should be stored in either snapshot repo or release repo?
+=>
+-Based on <version> tag in pom.xml
+  e.g.
+       <version> 0.1-snapshot OR 0.1-release </version>
+ -Once all details are configured in pom.xml we can run below maven goal to upload build artifacts to nexus server.
+                            $ mvn clean deploy
+
+Note: If we configured nexus as a service during setup, then we don’t need to start nexus everytime, as we start ec2, nexus will
+           start running on port 8081.
+
+
+
+
+
+
+##  Nexus as Remote Repository Manager ##
+
+-In case of maven, maven project search for dependencies in local repository. Local repository connect to central repository
+ (which is public) by default.
+-All dependencies requiring for our project will be downloaded from central repo if not available in local repo.
+- In industry, company have remote repo where they store dependencies for download within the company. It is maintained by 
+   company.
+
+
+Just like above, 
+-In nexus, we can create remote repositories, where we can have dependencies as jar files.
+-Steps:
+             create repository-> maven(hosted)->name=“proj1-remote-repo”->version=mixed->create
+-hosted repo is a repo that is hosted by nexus.
+-If we want to use jar files/dependencies for multiple projects with in company then we will use remote repository
+-Go to remote repo-> upload component-> give group id, artifact id, version ->upload
+-Thus, dependency is added to remote repo. We will get dependency snippet in usage section of that dependency. 
+  That snippet we have to paste in pom.xml
+
+-Now, when we try to do mvn clean package, we will get build failure.
+-As we specified dependency in pom.xml, but maven will look for that dependency in central repo.
+-We need to add <repository> tag in pom.xml
+
+<repositories>
+ <repository>
+      <id> nexus </id>
+       <url> repo-url </url>
+  </repository>
+</repositories>
+
+-Now, when we do mvn clean package dependency will get downloaded from remote repo on nexus, if not found
+ will download from central repo.
+
+
+
+*****
+-We have seen, nexus server credentials can be configured in settions.xml of maven app.
+-It is not recommended way to share username and password with every developer in project.
+-So for every team member, we will create users in nexus console.
+-For every user, we will give one id and password.
+-So develop will configure his username and password in his settings.xml. So they can able to
+ connect to nexus server and download dependencies.
+-At the end, remote repository is used to store shared libraries and artifacts.
+
+
+  
