@@ -1,0 +1,132 @@
+I will be taking today’s session on git and github.
+
+-starting with git, git is a free and open source distributed version control system designed to handle
+ everything from small to very large projects with speed and efficiency. We can see a new term here distributed version control system,
+ for that we need to understand first what is version control?
+
+-suppose there are 3 developer working remotely on a web application each of them is writing code for different web pages 
+or developing different functionality. How they can collaborate with each other, 
+share their code with each other and combine their code as a single source code. 
+That's where we can use version control system. With version control, each modification,
+each change in the project workspace is recorded and updated in one central repository. Repository is nothing but a folder or directory.
+
+-we can say version control is a system that records changes to a file or set of files over a period of time 
+so that you can recall specific versions later. Let us understand more about distributed version control system.
+
+-as there are 3 categories of origin control system or vcs. Local VCs, centralised VCs, distributed vCS.
+In local VCs, all the changes to a file r being tracked locally on developer system.
+It is mainly used by single developer to maintain versions of code.
+
+-then we have centralised VCs, where a developers connect to centralised server,
+the update their code on to centralised server and can collaborate with each other.
+
+-3rd category that is distributed VCs, here each developer will have their own local copy of repository 
+so that they can collaborate with other developers through merging and pushing  to remote repository.
+we can see here architecture of distributed VCs
+
+-these are local machines, workstations where each developer will be working on his part of code. 
+When you start working on your development task you will clone the entire project code from remote repository or central repository
+to your local repository located in your machine. Cloning means process of creating an identical copy.
+
+-As you have local copy of project at your machine, you can work with your part of development. 
+After doing that you can commit those modifications to local repository. After it is being reviewed, we can push those changes 
+to remote repository through push command. This is how distributed VCs will work.
+
+-we have skipped advantages of version control.  First one is that it manages and keeps record of changes for 
+better collaboration while software development. It allows us to know who made changes to code and when they are made. 
+It also allows to roll back to previous stable versions of code if there is issue with current version.
+
+-for a distributed VCs, it also has advantages over centralised VCs like your modifications are stored in local 
+repository first so you don't always need to connect remote repository through internet .
+
+-unlike centralised VCs, if the main server having central repository crashes or goes down we can still get entire 
+code from one of the local repositories as whole project is cloned on local repository.
+
+-There are multiple distributed version control systems like git, mercurial, bit keeper. 
+We will be seeing git as it is one of the most popular and widely used than others.
+
+
+
+******************************************************************************************
+
+-Git is created by Linus torvalds in 2005. As Said, it is developed to coordinate the work among the developers. 
+Version control allows us to track and work together with our team members at the same workspace.
+
+-next we will see how git works. This is git work flow. In git repository structure there is one working directory then we have staging area,
+local repository and central repository located remotely.
+-working directory is a directory where you create the files(write the code), make changes to it.It is a project workspace in our machine.
+-staging area is an area where you need to put your project before committing.
+-local repository is where you commit changes to the project before pushing them to central depository.
+ Central repository is the main project on central server.
+
+
+-we can understand this workflow better with some hands on. I have git installed on my machine
+you can download it through git-scm.com. We can access git with either git gui or through git bash. We are going to use git bash.
+
+-So first I will create one folder, this will be our project workspace, we will have over .js, .html files or any other files 
+that we create during project development. This is now just a normal folder, here any changes you made here is not going to be tracked anywhere. 
+-We will open git bash, we can see current directory here we will run simple command git init . 
+what git init does is it will convert an existing untracked repository into git repository. 
+-Converting into git repository means like telling git that I want to track this folder for any changes or modification.
+git init command creates .git folder in current working directory. This newly created sub directory contains all necessary metadata.
+-Before performing further get commands we will configure git to identify user and respective email address 
+so any changes which will be made in my application code can be tracked with developer who has made those particular commits.
+-We will do that using it config command this way we can configure global parameters and 
+any change that will be done in this kit repository will be recorded with my name and email.
+
+
+-Till now, we have initialised git repository and configured username and email. Let's create one text document here.
+seeing the workflow we have created a file which is in working directory, we have to add that file in staging area 
+but before that we will do git status to check current status of git repository.
+-staging area is the area from where git actually starts tackin and saving changes that occur in a file. 
+We can add files in staging area through git add command.
+-when we use git add, we can give file name that we want to add in staging area or
+we can give .  in that case all untracked and modified files will be added to staging area.
+-once the files are staged they are ready to be committed to local repository while committing we can associate a commit message with it using -m.
+-after committing let's check git status, we can see our working tree as clean that means all our changes to files in working directory
+are committed and saved in local repository. There isn't any modified or untracked files after that.
+-We can see all the previous commits and who have done that for our git repository through git log command. 
+-Here is the hash ID generated for that commit along with the author who has done this commit,when it is done also can be seen here.
+Looking at workflow each developer will make changes in the project and we will commit these changes to local repository.
+
+
+-A remote repository in git is a common git repository that all team members used to exchange their changes.
+It is a version of project that hosted on internet or network somewhere. 
+In most cases remote repository is stored on repository hosting services like GitHub, bitbucket or an internal server.
+
+-Before seeing push, pull operations will see what is GitHub. GitHub is a hosting service for git repositories
+in simple language it is a place where we can host our remote repositories. It is a cloud based code hosting platform.
+Generally we have to create our account on it before using it. It is a place where we can host or create repositories be accessible and referred by anyone in the world.
+
+-While git is a tool which does version control and manage source code history, GitHub is hosting service for projects that use git. 
+-Before pushing code from local repository to remote repository, we need to create connection between local repo and remote repo which is on GitHub. 
+                       git remote add origin <repo-URL>  will create that connection
+
+-git push origin master will push code from master branch of local repository to remote repository.
+
+-When it comes to syncing a remote repository, the pull command will update local repo with any new changes done to code at remote repo.
+
+-Here we came across master branch. Branches in git allows developers to work on different features, issues, bug fixes
+without affecting projects Main code base.
+
+-In real time we can have multiple developers and teams working on different features of the application, 
+so we can create multiple branches, each branch initially will be having exact copy of code in master branch.
+Team working on that branch will develop their part and commit changes to branch.
+-After review we can merge those changes with master branch for that we have to create a pull request. Pull requests is a mechanism
+for a developer to notify team members that they have completed a feature. So authorized person can review the code and merge it to main branch.
+
+
+
+-Talking about GitHub. GitHub can also be considered as social media for developers where they can share their work. 
+It hosts lot of open source projects and codes.
+-Public repositories can be accessed by searching redirecting through through link.
+
+some of the features of GitHub:
+1)Easy project management:- GitHub is one place where project managers, developers, coordinate, track and update their work.
+2)improved code writing:- pull request helps the team to review, improve and propose new codes on github. 
+3)easy code hosting:- all codes and documentations are present at one place.
+4)code safety:- GitHub uses tools to identify and analyse vulnerabilities to the code.
+
+
+
+ 
