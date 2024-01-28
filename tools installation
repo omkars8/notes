@@ -1,0 +1,750 @@
+-----------Maven Environment Setup in windows----------------
+
+1.download and install java s/w(maven is developed with java,so it needs jvm to run)
+2.set JAVA_HOME and PATH for java
+3.Download maven
+4.set MAVEN_HOME 
+
+JAVA_HOME=....\jdk.17.0
+PATH=...\jdk.17.0\bin
+
+MAVEN_HOME=...\apache-maven3.0
+PATH=...\apache-maven3.0\bin
+
+-other applications which use java may require JAVA_HOME to locate java in system. JAVA_HOME isn't used by java itself.some 3rd party programs use that.
+
+5.check installations with java -version and mvn -version
+
+
+
+***************create maven project**************
+
+maven archetype:generate -DgroupId=com.infy -DartifactId=01-Maven-App -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+
+(archetype--quickstart for standalone projects, web for web projects)
+
+
+
+
+*****************Setup maven in linux machine***********************
+
+sudo yum install java-1.8.0-openjdk(for maven java needs to be installed)
+sudo yum install maven -y
+mvn -version
+
+
+
+
+**************Working with Apache Tomact in Linux************************************************************************************************************************
+
+
+-> Login into AWS Management Console
+
+-> Create EC2 Instance (Amazon Linux AMI)
+
+-> Connect to EC2 instance using MobaXterm / Putty
+
+-> install java software using below command 
+
+		$ sudo yum install java-1.8.0-openjdk
+
+-> Verify the version of java installed in our machine 
+
+		$ java -version
+
+Note: If we have multiple java versions installed then we can switch to particular version using below command
+
+	$ alternatives --config java
+
+-> We can download apache tomcat from official website
+		
+	URL  : https://tomcat.apache.org/download-90.cgi
+
+-> We can find apache tomcat urls to download in official website downloads page
+
+-> Copy the URL of tar file and execute below command in linux machine
+
+		$ wget <tomact-tar-file-url>
+
+Note: I am using 
+
+	"https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.63/bin/apache-tomcat-9.0.63.tar.gz"
+
+-> After tomact tar file got downloaded then extract Tomcat Tar file using below command
+	
+		$ tar -xvf <tomact-tar-file-name>
+
+-> Go inside tomcat folder and see folder structure
+
+		$ cd tomact-folder
+		$ ls -ltr
+
+-> Go to tomact bin directory and run tomact server
+
+	$ cd bin
+	$ ./startup.sh
+
+Note: Tomcat Server runs on 8080 port by default. Enable this port in security group as custom tcp
+
+Type : Custom TCP
+Protoal : TCP
+Port Range: 8080
+Source : Custom (0.0.0.0/0)
+
+-> Access Tomact server from your browser
+
+	URL : http://EC2-VM-Public-IP:8080/
+
+Note: It should open tomact server home page.
+
+--------------------------------------------------------------------------------------------------
+
+=>we can upload war file to tomcat-folder/webapps through manger apps on tomcat admin console.
+=> but, By default the Host Manager is only accessible from a browser running on the same machine as Tomcat. If you wish to modify this restriction, you'll need to edit the Host Manager's context.xml file.
+
+=> File Location : <tomcat>/webapps/manager/META-INF/context.xml
+
+=> In Manager context.xml file, change <Valve> section like below (allow attribute value changed)
+
+<Context antiResourceLocking="false" privileged="true" >
+     <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow=".*" />
+</Context>
+
+
+
+Add tomact users in "tomact-folder/conf/tomact-users.xml" file like below 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<role rolename="manager-gui" />
+<user username="tomcat" password="tomcat" roles="manager-gui" />
+<role rolename="admin-gui" />
+<user username="admin" password="admin" roles="manager-gui,admin-gui"/>
+
+-> Stop the tomact server and start it(  cd bin , ./shutdown.sh)
+
+
+=>In manager apps on tomcat admin console, select war file to deploy-> chose file to deploy->deploy.
+  Go to http://EC2-VM-Public-IP:8080/<war-file-name>
+   
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+We can change tomcat server default port in tomact/conf/server.xml file 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+-> When we change tomact port number in server.xml file then we have to enable that port in Security Group which is associated with our EC2 instance.
+-> change <connector port="<new port no.>"   
+
+					   
+**********************************************************************************************************************************************************					   
+
+
+
+
+
+SonarQube setup
+
+-sonarqube developed using java(it requires java to be installed to run).
+-sonarqube server requires min 2 gb ram (t2.medium=4 gb ram)
+-sonarqube 7.6 can work with java 1.8
+-sonarqube 7.8 and higher requires java 11
+
+
+Sonar Qube Architecture
++++++++++++++++++++++++
+
+1) SonarQube Scanner 
+
+(it will take source code as input and it will generate report)
+
+2) SonarQube Server 
+
+-> SonarQube Server contains 3 components 
+
+1) Compute Engine
+2) Database
+3) WebServer
+4) Search Engine 
+
+       - Compute Engine
+				- Vulnerabilities
+			    - Bugs
+				- Code Smells
+		
+
+Note: Compute Engine will store report into H2 DB (we can configure external db also)
+
+		- WebServer (it will display report in webserver)
+		
+Note: Developers will see sonar report and will fix the issues 
+
+		- Search Engine (it will give search results)
+		
+		
+-> Create EC2 instance with 4 GB RAM (t2.medium)
+
+-> Connect with EC2 instance 
+
+-> check space (free -h)
+
+$ sudo su
+$ yum install wget -y
+$ cd /opt
+$ sudo yum install java-1.8.0-openjdk
+$ java -version
+$ yum install wget unzip -y
+$ wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-7.8.zip
+$ unzip sonarqube-7.8.zip
+
+Note: SonarQube server will not run with root user
+
+-> Create new user
+$ useradd sonar
+$ vi sudo
+
+-> Configure sudo user without pwd 
+sonar ALL=(ALL) NOPASSWD: ALL
+
+-> Change ownership for sonar folder
+$ chown -R sonar:sonar /opt/sonarqube-7.8/
+$ chmod -R 775 /opt/sonarqube-7.8
+$ su - sonar (switching to sonar user)
+
+-> Goto bin directory then goto linux directory and run sonar server 
+
+$ sh sonar.sh start
+
+-> Check sonar server status 
+
+$ sh sonar.sh status
+
+Note: Sonar Server runs on 9000 port number by default
+
+-> Enable port number in EC2 VM - Security Group
+
+-> Access Sonar Server in Browser 
+
+		URL : http://VM-IP:9000/
+
+-> Default Credentials of Sonar User is admin & admin 
+
+-> After login, we can go to Security and we can enable Force Authentication.
+
+Note: Once your work got completed then stop your EC2 instance because we have t2.medium so bill be generated.
+
+--------------------------------------------------------------------------------------------------
+-> start sonar server 
+
+-> Go to sonar server bin folder 
+
+-> Switch to sonar user 
+
+$ sh sonar.sh start
+
+Note: Search Engine can't run with root user
+
+$ sh sonar.sh status 
+
+Note: If sonar not started, then go to log file and see 
+
+$ sudo rpm -rf /opt/sonar-folder/temp/
+
+$ cd ../bin/
+
+$ sh sonar.sh start
+
+$ sh sonar.sh status
+
+-> Access sonar server in browser and login into that
+
+
++++++++++++++++++++++++++++++++++++++++++++
+Integrate Sonar server with Java Maven App
++++++++++++++++++++++++++++++++++++++++++++
+
+-> Configure Sonar Properties under <properties/> tag in "pom.xml"
+
+  <properties>
+	<sonar.host.url>http://3.110.114.186:9000/</sonar.host.url>
+	<sonar.login>admin</sonar.login>
+	<sonar.password>admin</sonar.password>
+  </properties>
+  
+  
+ ->we need to compile the code first  by mvn clean compile/ mvn clean package
+	
+-> Go to project pom.xml file location and execute below goal
+
+			$ mvn sonar:sonar
+
+
+-> After build success, goto sonar dashboard and verify that 
+
+
+
+++++++++++++++++++++++++++
+Working with Sonar Token
++++++++++++++++++++++++++++
+Note: Instead of username and pwd we can configure sonar token in pom.xml
+
+-> Goto Sonar -> Login -> Click on profile -> My Account -> Security -> Generate Token 
+
+-> Copy the token and configure that token in pom.xml file like below
+	
+	<sonar.host.url>http://3.110.114.186:9000/</sonar.host.url>
+	<sonar.login>9ba2f624c854238b78592f544de655f1c272b92e</sonar.login>
+
+-> Then build the project using "mvn sonar:sonar" goal
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+-> For each language sonar qube provided one quality profile with set of rules
+
+-> Quality Profile means set of rules to perform code review
+
+-> We can create our own quality profile based on project requirement
+
+-> Create One Quality Profile
+
+			- Name : SBI_Project
+			- Language: Java
+			- Parent : None
+
+Note: We can make our quality profile as default one then it will be applicable for all the projects which gets reviewed under this sonar server.
+
+Note: If we have any common ruleset for all projects then we can create one quality profile and we can use that as parent quality profile for other projects.
+
+-> We can configure quality profile to specific project
+
+			- click on project name on console
+			- Go to administration
+			- Click on quality profile
+			- Select profile required
+-------------------------------------------------------------------------------------------------
+Quality Gate
+-------------------------------------------------------------------------------------------------
+
+-> Quality Gate represents set of metric to identify project quality is Passed or Failed
+
+-> Every Project Quality Gate should be passed
+
+-> In Sonar We have default Quality Gate
+
+-> If required, we can create our own Quality Gate also
+
+
+Note: If project quality gate is failed then we should not accept that code for deployment.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-> If project is having Sonar issues then development team is responsible to fix those issues
+
+-> As a DevOps engineer, we will perform Code Review and we will send Code Review report to Development team (we will send sonar server URL to development team)
+
+
+
+
+********************************************************************************************************************************************************************
+
+
+Nexus setup
+
+
+-> Take t2.medium instance
+
+-> Java s/w is required to install Nexus
+
+-> Connect to t2.medium instance using mobaxterm
+
+
+#  Nexus S/w Installation Process in Linux OS
+
+$ sudo su -
+
+$ cd /opt
+
+$ yum install tar wget -y
+
+Note: https://help.sonatype.com/repomanager3/product-information/download
+
+# latest version
+$ wget https://download.sonatype.com/nexus/3/nexus-3.40.1-01-unix.tar.gz
+
+# old version
+$ wget http://download.sonatype.com/nexus/3/nexus-3.15.2-01-unix.tar.gz
+
+$ tar -zxvf nexus-3.40.1-01-unix.tar.gz
+
+$ mv /opt/nexus-3.40.1-01 /opt/nexus
+
+
+#As a good security practice, Nexus is not advised to run nexus service as a root user, so create a new user called nexus and grant sudo access to manage nexus services as follows.
+ 
+$ useradd nexus
+
+#Give the sudo access to nexus user
+
+$ visudo
+nexus ALL=(ALL) NOPASSWD: ALL
+
+#Change the owner and group permissions to /opt/nexus and /opt/sonatype-work directories.
+
+$ chown -R nexus:nexus /opt/nexus
+$ chown -R nexus:nexus /opt/sonatype-work
+$ chmod -R 775 /opt/nexus
+$ chmod -R 775 /opt/sonatype-work
+
+# Open /opt/nexus/bin/nexus.rc file and  uncomment run_as_user parameter and set as nexus user.
+
+$ vi /opt/nexus/bin/nexus.rc
+run_as_user="nexus"
+
+# Create nexus as a service
+
+$ ln -s /opt/nexus/bin/nexus /etc/init.d/nexus
+
+# install java 1.8v 
+$ sudo yum install java-1.8.0-openjdk
+
+# Switch as a nexus user and start the nexus service as follows.
+
+$ su - nexus
+
+# Enable the nexus services
+$ sudo systemctl enable nexus
+
+# Start the nexus service
+$ sudo systemctl start nexus
+
+#Access the Nexus server from Laptop/Desktop browser.
+ 
+URL : http://IPAddess:8081/
+
+Note: Enable this 8081 port number in Security Group
+
+# Default Username
+User Name: admin
+
+# we can copy nexus password using below command
+$ sudo cat /opt/sonatype-work/nexus3/admin.password
+
+
+-> We can change nexus default properties (like port no. and context path)
+
+	/opt/nexus/etc/nexus.properties
+
+
+####################################
+Integrate Maven with Nexus
+####################################
+
+-> Create Repositories in Nexus to store build artifacts
+
+-> We will create 2 types of repositories in Nexus
+
+	1) snapshot
+
+	2) release
+
+-> If project is under development then that project build artifacts will be stored into snapshot repository
+
+-> If project development completed and released to production then that project build artifacts will be stored to release repository
+
+Snanpshot Repo URL : http://13.233.238.64:8081/repository/ashokit_snapshot_repo/
+
+Release Repo URL : http://13.233.238.64:8081/repository/ashokit_release_repo/
+
+Note: Based on <version/> name available in project pom.xml file it will decide artifacts should be stored to which repository in either snapshot repo or release repo.
+
+-> Nexus Repository details we will configure in project pom.xml  file like below
+
+
+  <distributionManagement>  
+	<repository>
+		<id>nexus</id>
+		<name>Ashok IT Releases Nexus Repo</name>
+		<url>http://15.207.19.102:8081/repository/ashokit-release-repository/</url>
+	</repository>
+	
+	<snapshotRepository>
+		<id>nexus</id>
+		<name>Ashok IT Snapshots Nexus Repo</name>
+		<url>http://15.207.19.102:8081/repository/ashokit-snapshot-repository/</url>
+	</snapshotRepository>	
+</distributionManagement>
+
+-> Nexus Server Credentials will be configured in Maven "settings.xml" file
+
+-> Maven Location : C:\apache-maven-3.8.5\conf\settings.xml
+
+-> In settings.xml file, under <servers> tag add below <server> tag
+
+	<server>
+		<id>nexus</id>
+		<username>admin</username>
+		<password>admin@123</username>
+	</server>
+
+
+-> Once these details are configured then we can run below maven goal to upload build artifacts to Nexus Server
+
+	$ mvn clean deploy
+
+
+
+##################
+Remote Repository 
+##################
+
+-> Remote repository used for shared libraries
+
+-> If we want to use few jar files in multiple projects in the company then we will use Remote Repository 
+
+-> Remote repository is specific to our company projects
+
+-> Create remote repo in nexus and upload a jar file 
+
+-> Take dependency details of uploaded jar file and add in project pom.xml as a dependency
+
+-> We need to add Remote Repository Details in pom.xml above <dependencies/> tag
+
+<repositories>
+<repository>
+	<id>nexus</id>
+	<url>repo-url</url>
+</repository>
+</repositories>
+
+-> After adding the remote repository details do maven package and see dependency is downloading from nexus repo or not.
+
+-> We will create users and will give access for users for our repositories
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+*******Jenkins*************
+
+
+
+Components of Jenkins:
+++++++++++++++++++++++++++
+
+    Master Node: The system where you install and run Jenkins.
+    Managed Node: Target systems managed by Jenkins.
+    Repository: Version controlled system where you keep your code.
+    UI: User interface to manage and configure Jenkins.
+    Pipeline: Means of continuous deployment of your code to target systems from the version control system.
+    Plugins: Means of enhancing the functionality of a Jenkins.
+
+
+Jenkins Installation:
++++++++++++++++++++++++++
+Prerequisite:
+
+    One EC2 Amazon Linux 2 instance with internet access
+    Java 8 runtime environments
+
+Step1
+	
+#####################################
+## Jenkins installation on AWS EC2 ##
+#####################################
+## Create an EC2 instance with Amazon Linux 2 AMI 
+## Amazon Linux 2 AMI (HVM), SSD Volume Type
+## Connect to your EC2 instance
+ 
+## Update all packages
+	$ sudo yum update -y
+ 
+## Install Java 
+	$ sudo yum install java-1.8.0-openjdk-devel
+
+Step2
+
+## Jenkins installation on AWS EC2 using YUM ##
+###############################################
+ 
+## Add Jenkins repo to your yum repository
+$ sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+ 
+## Import a key file from Jenkins-CI to enable installation from the package
+$ sudo rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+ 
+## For Amazon Linux 2
+$ sudo amazon-linux-extras install epel
+ 
+## Install Jenkins
+$ sudo yum install jenkins -y
+ 
+## Start and enable Jenkins service
+$ sudo systemctl start jenkins
+$ sudo systemctl enable jenkins
+$ sudo systemctl status jenkins
+ 
+## Get the initial administrative password 
+$ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+pwd : 5fe6ddcc9db244cab6aca5ccf2d6a83a
+
+
+Step3:
+Open your EC2 instance public DNS or public IP (http://<PUBLIC_DNS/PUBLIC_IP>:8080/) along with port 8080 in your favorite browser. And provide the administrative password obtained during the installation.
+
+Note: Make sure you enabled 8080 port in Security Group Inbound Rules which is attached to EC2 instance.
+
+			URL : http://43.204.214.21:8080/
+
+-> Provide pwd which we have copied to unlock jenkins
+
+-> Select "Install Suggested Plugins" card (it will install those plugins)
+
+-> Create Admin account
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+Creating First Job in Jenkins 
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+1) Goto Jenkins Dashboard
+
+2) Click on New Iteam
+
+		-> Enter Item Name (Job Name)
+		-> Select Free Style Project & Click OK
+		-> Enter some description
+		-> Click on 'Build' tab
+		-> Click on 'Add Build Step' and select 'Execute Shell'
+
+
+3) Enter below shellscript
+
+echo "Hello Guys,"
+touch ashokit.txt
+echo "Hello Guys, Welcome to Jenkins Classes" >> ashokit.txt
+echo "Done..!!"
+
+4) Apply and Save
+
+Note: With above steps we have created JENKINS Job
+
+5) Click on 'Build Now' to start Job execution
+
+6) Click on 'Build Number' and then click on 'Console Ouput' to see job execution details.
+
+
+=> Jenkins Home Directory in EC2 : /var/lib/jenkins/workspace/
+
+		$ cd /var/lib/jenkins/workspace/
+
+7) Go to Jenkins home directory and check for the job name --> check the file created inside the job
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Jenkins Job with with GIT Hub Repo + Maven - Integeration
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Pre-Requisites : Java, Git & Maven
+
+Git installation In Ec2:
+++++++++++++++++++++++++++
+
+$ sudo yum install git -y
+
+JDK Installation In Jenkins: 
+++++++++++++++++++++++++++++
+
+Jenkins Dashboard -> Manage Jenkins -> Global Tools Configuration -> Add JDK -> Choose JDK 8 -> Configure Oracle account crdentials to download JDK.
+
+Maven Installation In Jenkins: 
+++++++++++++++++++++++++++++++
+
+Jenkins Dashboard -> Manage Jenkins --> Global Tools Configuration -> Add maven
+
+
+Sample Git Repo URLS For Practise
+++++++++++++++++++++++++++++++++++
+
+Git Hub Repo URL-1  : https://github.com/ashokitschool/JAVA-MAVEN-WEB-APP.git
+Git Hub Repo URL-2  : https://github.com/ashokitschool/maven-web-app.git
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+Steps To Create Jenkins Job with Git Repo + Maven
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+1) Connect to EC2 instance in which jenkins server got installed
+
+2) Start Jenkins Server
+
+3) Access Jenkins Server Dashboard and Login with your jenkins credentials
+
+4) Create Jenkins Job with Git Hub Repo 
+
+		-> New Item
+		-> Enter Item Name (Job Name)
+		-> Select Free Style Project & Click OK
+		-> Enter some description
+		-> Go to "Source Code Management" Tab and Select "Git"
+		-> Enter Project "Git Repo URL"
+		-> Add Your Github account credentials
+		-> Go to "Build tab"
+		-> Click on Add Build Step and Select 'Inovke Top Level Maven Targets'
+		-> Select Maven and enter goals 'clean package'
+		-> Click on Apply and Save
+
+Note: With above steps we have created JENKINS Job
+
+5) Click on 'Build Now' to start Job execution
+
+6) Click on 'Build Number' and then click on 'Console Ouput' to see job execution details.
+
+=> Jenkins Home Directory in EC2 : /var/lib/jenkins/workspace/
+
+=> Go to jenkins workspace and then go to job folder then goto target folder then see war file created.
+
+-------------------------------------------------------------------------------------------------
+
+=> Access below URL in browser to stop Jenkins Server
+
+		URL : http://EC2-VM-IP:8080/exit
+
+		(Click on Retry using Post button)
+
+
+-----------------------------------------------------------------------------------------------------
+Steps To Create Jenkins Job with Git Repo + Maven + Tomcat Server
+------------------------------------------------------------------------------------------------------
+
+1) Go to Tomcat server folder and configure below users in "tomcat-users.xml" file (it will be available in tomcat -erver conf folder)
+
+<role rolename="manager-gui" />
+<role rolename="manager-script" />
+<role rolename="admin-gui" />
+
+<user username="tomcat" password="tomact" roles="manager-gui" />
+<user username="admin" password="admin" roles="manager-gui,manager-script,admin-gui"/>
+
+2) Go to Jenkins Dashboard -> Manage Jenkins --> Manage Plugins -> Goto Available -> Search For "Deploy Container" Plugin -> Install it.
+
+3) Create Jenkins Job 
+
+		-> New Item
+		-> Enter Item Name (Job Name)
+		-> Select Free Style Project & Click OK
+		-> Enter some description
+		-> Go to "Source Code Management" Tab and Select "Git"
+		-> Enter Project "Git Repo URL"
+		-> Add Your Github account credentials
+		-> Go to "Build tab"
+		-> Click on Add Build Step and Select 'Inovke Top Level Maven Targets'
+		-> Select Maven and enter goals 'clean package'
+		-> Click on 'Post Build Action' and Select 'Deploy war/ear to container' option
+		-> Give path of war file (You can give like this also : **/*.war )
+		-> Enter Context Path (give project name)
+		-> Click on 'Add Container' and select Tomcat version 9.x
+		-> Add Tomcat server credentials (give the username & pwd which is having manager-script role)
+		-> Enter Tomact Server URL (http://ec2-vm-ip:tomcat-server-port)
+		-> Click on Apply and Save
+
+4) Run the job now using 'Build Now' option and see see 'Console Output' of job
+
+5) Once Job Executed successfully, go to tomcat server dashboard and see application should be displayed.
+
+6) Click on the applicaton name (it should display our application)
